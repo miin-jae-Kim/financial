@@ -13,12 +13,26 @@ import {
 import { IndicatorChart } from './Chart';
 import { IndicatorCard } from './IndicatorCard';
 import { RightPanel } from './RightPanel/RightPanel';
+import { MemoMode } from './MemoMode/MemoMode';
+import { ReviewMode } from './ReviewMode/ReviewMode';
+import { EventType } from '@/types';
 
 type DateRange = '1M' | '3M' | '6M' | '1Y' | '2Y' | 'ALL';
 
 interface DashboardProps {
   data: CombinedData;
 }
+
+type MemoModeState = {
+  type: 'memo';
+  eventId: string;
+  eventType: EventType;
+  eventDate: string;
+  eventTitle: string;
+} | {
+  type: 'review';
+  entryId: string;
+} | null;
 
 const UPDATE_INTERVAL_MS = 30 * 60 * 1000; // 30분
 
@@ -28,6 +42,7 @@ export function Dashboard({ data }: DashboardProps) {
   const [showYieldSpread, setShowYieldSpread] = useState(false);
   const [showCpiYoY, setShowCpiYoY] = useState(false);
   const [showReleaseSchedule, setShowReleaseSchedule] = useState(true);
+  const [memoMode, setMemoMode] = useState<MemoModeState>(null);
 
   // 자동 데이터 업데이트 체크
   useEffect(() => {
@@ -131,6 +146,29 @@ export function Dashboard({ data }: DashboardProps) {
 
       <div className="flex max-w-7xl mx-auto">
         <main className="flex-1 px-4 py-6">
+        {memoMode ? (
+          memoMode.type === 'memo' ? (
+            <MemoMode
+              data={data}
+              eventId={memoMode.eventId}
+              eventType={memoMode.eventType}
+              eventDate={memoMode.eventDate}
+              eventTitle={memoMode.eventTitle}
+              onClose={() => setMemoMode(null)}
+              onSave={() => {
+                // 저장 후 메모 모드 닫기
+                setMemoMode(null);
+              }}
+            />
+          ) : (
+            <ReviewMode
+              data={data}
+              entryId={memoMode.entryId}
+              onClose={() => setMemoMode(null)}
+            />
+          )
+        ) : (
+          <>
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-terminal-surface border border-terminal-border rounded-lg p-4">
@@ -299,6 +337,8 @@ export function Dashboard({ data }: DashboardProps) {
             </p>
           </div>
         </footer>
+        </>
+        )}
         </main>
 
         {/* Right Panel */}
@@ -306,6 +346,21 @@ export function Dashboard({ data }: DashboardProps) {
           data={data}
           isOpen={showReleaseSchedule}
           onClose={() => setShowReleaseSchedule(false)}
+          onOpenMemoMode={(eventId, eventType, eventDate, eventTitle) => {
+            setMemoMode({
+              type: 'memo',
+              eventId,
+              eventType,
+              eventDate,
+              eventTitle,
+            });
+          }}
+          onOpenReviewMode={(entryId) => {
+            setMemoMode({
+              type: 'review',
+              entryId,
+            });
+          }}
         />
       </div>
 

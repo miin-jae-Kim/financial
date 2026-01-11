@@ -2,21 +2,54 @@
 
 import { useState, useEffect } from 'react';
 import { format, differenceInDays } from 'date-fns';
-import { CombinedData } from '@/types';
+import { CombinedData, EventType } from '@/types';
 import { IndicatorReleaseDate, getAllNextReleaseDates } from '@/lib/releaseDates';
 import { ReleaseResults } from '../ReleaseResults';
+import { fetchAllEntries } from '@/lib/journal';
+import { JournalEntry } from '@/types';
 
 interface MarketTabProps {
   data: CombinedData;
+  onOpenMemoMode?: (eventId: string, eventType: EventType, eventDate: string, eventTitle: string) => void;
+  onOpenReviewMode?: (entryId: string) => void;
+}
+
+function getEventType(key: string): EventType | null {
+  if (key === 'fedFundsRate') return 'FOMC';
+  if (key === 'cpi') return 'CPI';
+  if (key === 'nonfarmPayroll') return 'NFP';
+  return null;
+}
+
+function getEventId(eventType: EventType, eventDate: string): string {
+  return `${eventType.toLowerCase()}-${eventDate}`;
+}
+
+function getEventTitle(eventType: EventType, eventDate: string, name: string): string {
+  const date = new Date(eventDate);
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  
+  if (eventType === 'FOMC') {
+    return `${year}년 ${month}월 FOMC 금리 결정`;
+  }
+  if (eventType === 'CPI') {
+    return `${year}년 ${month}월 CPI 발표`;
+  }
+  if (eventType === 'NFP') {
+    return `${year}년 ${month}월 Nonfarm Payroll 발표`;
+  }
+  return name;
 }
 
 type TabType = 'schedule' | 'results';
 
-export function MarketTab({ data }: MarketTabProps) {
+export function MarketTab({ data, onOpenMemoMode, onOpenReviewMode }: MarketTabProps) {
   const [activeTab, setActiveTab] = useState<TabType>('schedule');
   const [releaseDates, setReleaseDates] = useState<IndicatorReleaseDate[]>([]);
   const [releaseDatesData, setReleaseDatesData] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -31,6 +64,10 @@ export function MarketTab({ data }: MarketTabProps) {
           const data = await response.json();
           setReleaseDatesData(data);
         }
+
+        // Journal 엔트리 가져오기
+        const entries = await fetchAllEntries();
+        setJournalEntries(entries);
       } catch (error) {
         console.error('Error fetching release data:', error);
       } finally {
@@ -103,11 +140,26 @@ export function MarketTab({ data }: MarketTabProps) {
                 const daysUntil = getDaysUntil(item.nextReleaseDate);
                 const isToday = daysUntil === 0;
                 const isSoon = daysUntil !== null && daysUntil <= 3;
+                const eventType = getEventType(item.key);
+                const hasEntry = eventType && item.nextReleaseDate
+                  ? journalEntries.some(e => e.eventId === getEventId(eventType, item.nextReleaseDate!))
+                  : false;
+
+                const handleClick = () => {
+                  if (!eventType || !item.nextReleaseDate || !onOpenMemoMode) return;
+                  
+                  const eventId = getEventId(eventType, item.nextReleaseDate);
+                  const eventTitle = getEventTitle(eventType, item.nextReleaseDate, item.name);
+                  onOpenMemoMode(eventId, eventType, item.nextReleaseDate, eventTitle);
+                };
 
                 return (
                   <div
                     key={item.key}
-                    className="bg-terminal-surface border border-terminal-border rounded-lg p-3"
+                    onClick={handleClick}
+                    className={`bg-terminal-surface border border-terminal-border rounded-lg p-3 cursor-pointer hover:border-terminal-green/50 transition-colors ${
+                      hasEntry ? 'border-terminal-green/30' : ''
+                    }`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
@@ -117,6 +169,9 @@ export function MarketTab({ data }: MarketTabProps) {
                             style={{ backgroundColor: item.color }}
                           />
                           <span className="text-sm font-medium text-white">{item.name}</span>
+                          {hasEntry && (
+                            <span className="text-xs text-terminal-green">✓</span>
+                          )}
                         </div>
                         <p className="text-xs text-terminal-muted">{item.releaseName}</p>
                       </div>
@@ -151,7 +206,12 @@ export function MarketTab({ data }: MarketTabProps) {
         )}
 
         {activeTab === 'results' && (
-          <ReleaseResults data={data} releaseDates={releaseDatesData} />
+          <ReleaseResults
+            data={data}
+            releaseDates={releaseDatesData}
+            journalEntries={journalEntries}
+            onOpenReviewMode={onOpenReviewMode}
+          />
         )}
       </div>
     </div>

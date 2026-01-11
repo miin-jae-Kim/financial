@@ -160,3 +160,72 @@ export const INDICATOR_CONFIGS: IndicatorConfig[] = [
     releaseId: 50, // Employment Situation
   },
 ];
+
+// Journal Types
+export interface DataSnapshot {
+  timestamp: string;
+  treasury2y: number;
+  treasury10y: number;
+  fedFundsRate: number;
+  cpi: number;
+  cpiYoY: number;
+  nonfarmPayroll: number;
+  vix: number;
+  sp500: number;
+  hySpread: number;
+  sahmRule: number;
+  unemployment: number;
+  yieldSpread: number;
+  realRate: number;
+}
+
+export interface AiOpinion {
+  id: string;
+  stance: 'bullish' | 'neutral' | 'bearish';
+  title: string;
+  summary: string;
+  reasoning: string;
+  keyIndicators: string[];
+}
+
+export interface AiOpinions {
+  generatedAt: string;
+  dataHash: string;
+  opinions: {
+    bullish: AiOpinion;
+    neutral: AiOpinion;
+    bearish: AiOpinion;
+  };
+}
+
+export interface JournalResult {
+  actual: string;
+  snapshotAfter: DataSnapshot;
+  aiFeedback: string;
+  feedbackGeneratedAt: string;
+  isCorrect: boolean;
+}
+
+export interface JournalEntry {
+  id: string;
+  eventId: string;
+  eventType: 'FOMC' | 'CPI' | 'NFP';
+  eventDate: string;
+  eventTitle: string;
+  createdAt: string;
+  snapshot: DataSnapshot;
+  aiOpinions: AiOpinions;
+  aiOpinionsGeneratedAt: string;
+  category: 'rate' | 'sp500';
+  prediction: string;
+  memo: string;
+  usedAiOpinion: string | null;
+  result?: JournalResult;
+}
+
+export interface Journal {
+  entries: JournalEntry[];
+}
+
+export type EventType = 'FOMC' | 'CPI' | 'NFP';
+export type PredictionCategory = 'rate' | 'sp500';

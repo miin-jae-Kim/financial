@@ -2,8 +2,19 @@
 
 import { useMemo } from 'react';
 import { format } from 'date-fns';
-import { CombinedData, INDICATOR_CONFIGS } from '@/types';
+import { CombinedData, INDICATOR_CONFIGS, EventType, JournalEntry } from '@/types';
 import { getLatestValue, formatValue } from '@/lib/data';
+
+function getEventType(key: string): EventType | null {
+  if (key === 'fedFundsRate') return 'FOMC';
+  if (key === 'cpi') return 'CPI';
+  if (key === 'nonfarmPayroll') return 'NFP';
+  return null;
+}
+
+function getEventId(eventType: EventType, eventDate: string): string {
+  return `${eventType.toLowerCase()}-${eventDate}`;
+}
 
 interface ReleaseResult {
   key: string;
@@ -20,9 +31,11 @@ interface ReleaseResult {
 interface ReleaseResultsProps {
   data: CombinedData;
   releaseDates: Record<string, string[]>;
+  journalEntries?: JournalEntry[];
+  onOpenReviewMode?: (entryId: string) => void;
 }
 
-export function ReleaseResults({ data, releaseDates }: ReleaseResultsProps) {
+export function ReleaseResults({ data, releaseDates, journalEntries = [], onOpenReviewMode }: ReleaseResultsProps) {
   const results = useMemo(() => {
     const today = new Date();
     const lastMonthFirst = new Date(today.getFullYear(), today.getMonth() - 1, 1); // 지난달 1일
@@ -121,11 +134,26 @@ export function ReleaseResults({ data, releaseDates }: ReleaseResultsProps) {
         const isPositive = result.change !== null && result.change >= 0;
         const changeColor = isPositive ? 'text-terminal-green' : 'text-terminal-red';
         const changeSymbol = isPositive ? '+' : '';
+        const eventType = getEventType(result.key);
+        const entry = eventType
+          ? journalEntries.find(e => e.eventId === getEventId(eventType, result.releaseDate))
+          : null;
+        const hasEntry = !!entry;
+        const hasResult = !!entry?.result;
+
+        const handleClick = () => {
+          if (entry && onOpenReviewMode) {
+            onOpenReviewMode(entry.id);
+          }
+        };
 
         return (
           <div
             key={`${result.key}-${result.releaseDate}-${index}`}
-            className="bg-terminal-surface border border-terminal-border rounded-lg p-3"
+            onClick={hasEntry ? handleClick : undefined}
+            className={`bg-terminal-surface border border-terminal-border rounded-lg p-3 ${
+              hasEntry ? 'cursor-pointer hover:border-terminal-green/50 transition-colors' : ''
+            } ${hasResult ? 'border-terminal-green/30' : ''}`}
           >
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex items-center gap-2">
@@ -134,6 +162,11 @@ export function ReleaseResults({ data, releaseDates }: ReleaseResultsProps) {
                   style={{ backgroundColor: result.color }}
                 />
                 <span className="text-sm font-medium text-white">{result.name}</span>
+                {hasEntry && (
+                  <span className="text-xs text-terminal-green">
+                    {hasResult ? '✓' : '📝'}
+                  </span>
+                )}
               </div>
               <span className="text-xs text-terminal-muted">
                 {format(new Date(result.releaseDate), 'yyyy.MM.dd')}

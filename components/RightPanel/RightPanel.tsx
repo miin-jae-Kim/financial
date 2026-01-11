@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CombinedData } from '@/types';
+import { CombinedData, EventType } from '@/types';
 import { MarketTab } from './MarketTab';
 import { ChatTab } from './ChatTab';
 
@@ -11,9 +11,11 @@ interface RightPanelProps {
   data: CombinedData;
   isOpen: boolean;
   onClose: () => void;
+  onOpenMemoMode?: (eventId: string, eventType: EventType, eventDate: string, eventTitle: string) => void;
+  onOpenReviewMode?: (entryId: string) => void;
 }
 
-export function RightPanel({ data, isOpen, onClose }: RightPanelProps) {
+export function RightPanel({ data, isOpen, onClose, onOpenMemoMode, onOpenReviewMode }: RightPanelProps) {
   const [activeTab, setActiveTab] = useState<RightPanelTab>('market');
 
   if (!isOpen) return null;
@@ -68,7 +70,13 @@ export function RightPanel({ data, isOpen, onClose }: RightPanelProps) {
 
         {/* Tab Content */}
         <div className="flex-1 overflow-hidden flex flex-col">
-          {activeTab === 'market' && <MarketTab data={data} />}
+          {activeTab === 'market' && (
+            <MarketTab
+              data={data}
+              onOpenMemoMode={onOpenMemoMode}
+              onOpenReviewMode={onOpenReviewMode}
+            />
+          )}
           {activeTab === 'chat' && <ChatTab data={data} />}
         </div>
       </div>
