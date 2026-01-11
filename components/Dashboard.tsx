@@ -12,6 +12,7 @@ import {
 } from '@/lib/data';
 import { IndicatorChart } from './Chart';
 import { IndicatorCard } from './IndicatorCard';
+import { ReleaseSchedule } from './ReleaseSchedule';
 
 type DateRange = '1M' | '3M' | '6M' | '1Y' | '2Y' | 'ALL';
 
@@ -24,6 +25,7 @@ export function Dashboard({ data }: DashboardProps) {
   const [dateRange, setDateRange] = useState<DateRange>('1Y');
   const [showYieldSpread, setShowYieldSpread] = useState(false);
   const [showCpiYoY, setShowCpiYoY] = useState(false);
+  const [showReleaseSchedule, setShowReleaseSchedule] = useState(true);
 
   const selectedConfig = INDICATOR_CONFIGS.find(c => c.key === selectedIndicator);
 
@@ -95,7 +97,8 @@ export function Dashboard({ data }: DashboardProps) {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <div className="flex max-w-7xl mx-auto">
+        <main className="flex-1 px-4 py-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-terminal-surface border border-terminal-border rounded-lg p-4">
@@ -264,7 +267,66 @@ export function Dashboard({ data }: DashboardProps) {
             </p>
           </div>
         </footer>
-      </main>
+        </main>
+
+        {/* Right Sidebar - Release Schedule */}
+        <aside
+          className={`w-80 border-l border-terminal-border bg-terminal-surface/50 transition-all duration-300 ${
+            showReleaseSchedule ? 'block' : 'hidden'
+          }`}
+        >
+          <div className="sticky top-[80px] p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-display font-bold text-white">
+                발표 일정
+              </h3>
+              <button
+                onClick={() => setShowReleaseSchedule(!showReleaseSchedule)}
+                className="text-terminal-muted hover:text-white transition-colors"
+                aria-label="Toggle release schedule"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <ReleaseSchedule data={data} />
+          </div>
+        </aside>
+      </div>
+
+      {/* Toggle Button (when sidebar is hidden) */}
+      {!showReleaseSchedule && (
+        <button
+          onClick={() => setShowReleaseSchedule(true)}
+          className="fixed right-4 top-24 bg-terminal-surface border border-terminal-border rounded-lg p-2 text-terminal-green hover:bg-terminal-surface/80 transition-colors z-40"
+          aria-label="Show release schedule"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }

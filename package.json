@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "update-data": "npx ts-node --project tsconfig.scripts.json scripts/updateData.ts",
-    "reset-data": "npx ts-node --project tsconfig.scripts.json scripts/updateData.ts --reset"
+    "reset-data": "npx ts-node --project tsconfig.scripts.json scripts/updateData.ts --reset",
+    "update-release-dates": "npx ts-node --project tsconfig.scripts.json scripts/updateReleaseDates.ts"
   },
   "dependencies": {
     "next": "14.2.5",

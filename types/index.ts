@@ -30,6 +30,7 @@ export interface IndicatorConfig {
   source: 'fred';
   sourceId: string;
   frequency: 'daily' | 'monthly';
+  releaseId?: number; // FRED Release ID for release dates
 }
 
 export const INDICATOR_CONFIGS: IndicatorConfig[] = [
@@ -42,6 +43,7 @@ export const INDICATOR_CONFIGS: IndicatorConfig[] = [
     source: 'fred',
     sourceId: 'DGS2',
     frequency: 'daily',
+    releaseId: 18, // H.15 Selected Interest Rates
   },
   {
     key: 'treasury10y',
@@ -52,6 +54,7 @@ export const INDICATOR_CONFIGS: IndicatorConfig[] = [
     source: 'fred',
     sourceId: 'DGS10',
     frequency: 'daily',
+    releaseId: 18, // H.15 Selected Interest Rates
   },
   {
     key: 'fedFundsRate',
@@ -62,6 +65,7 @@ export const INDICATOR_CONFIGS: IndicatorConfig[] = [
     source: 'fred',
     sourceId: 'FEDFUNDS',
     frequency: 'monthly',
+    releaseId: 18, // H.15 Selected Interest Rates
   },
   {
     key: 'cpi',
@@ -72,6 +76,7 @@ export const INDICATOR_CONFIGS: IndicatorConfig[] = [
     source: 'fred',
     sourceId: 'CPIAUCSL',
     frequency: 'monthly',
+    releaseId: 10, // Consumer Price Index
   },
   {
     key: 'nonfarmPayroll',
@@ -82,6 +87,7 @@ export const INDICATOR_CONFIGS: IndicatorConfig[] = [
     source: 'fred',
     sourceId: 'PAYEMS',
     frequency: 'monthly',
+    releaseId: 50, // Employment Situation
   },
   {
     key: 'vix',
