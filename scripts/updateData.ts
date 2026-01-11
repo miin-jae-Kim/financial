@@ -108,10 +108,14 @@ function addDays(dateStr: string, days: number): string {
 
 async function fetchFredData(seriesId: string, startDate: string): Promise<DataPoint[]> {
   const url = new URL('https://api.stlouisfed.org/fred/series/observations');
+  // observation_end를 설정하지 않으면 최신 데이터까지 모두 가져옴
+  // 스크립트 실행 날짜 기준으로 최신 데이터까지 자동으로 가져옴
+  
   url.searchParams.append('series_id', seriesId);
   url.searchParams.append('api_key', FRED_API_KEY);
   url.searchParams.append('file_type', 'json');
   url.searchParams.append('observation_start', startDate);
+  // observation_end를 명시하지 않으면 FRED가 자동으로 최신 데이터까지 반환
   url.searchParams.append('sort_order', 'asc');
 
   try {
@@ -123,13 +127,32 @@ async function fetchFredData(seriesId: string, startDate: string): Promise<DataP
     const json = (await response.json()) as FredResponse;
     const observations = json.observations || [];
     
-    return observations
+    // 디버깅: 전체 응답 정보 출력
+    console.log(`  Total observations from FRED: ${observations.length}`);
+    if (observations.length > 0) {
+      const lastObs = observations[observations.length - 1];
+      console.log(`  Last observation from FRED: ${lastObs.date} = ${lastObs.value}`);
+    }
+    
+    const dataPoints = observations
       .filter((obs) => obs.value !== '.' && !isNaN(parseFloat(obs.value)))
       .map((obs) => ({
         date: obs.date,
         value: parseFloat(obs.value),
       }))
       .filter((dp) => dp.date >= START_DATE); // 2020-01-01 이후 데이터만 필터링
+    
+    // 디버깅: 가져온 데이터의 첫 번째와 마지막 날짜 출력
+    if (dataPoints.length > 0) {
+      console.log(`  Valid data points: ${dataPoints.length} records: ${dataPoints[0].date} to ${dataPoints[dataPoints.length - 1].date}`);
+      // 최근 5개 데이터 출력
+      const recentData = dataPoints.slice(-5);
+      console.log(`  Recent 5 dates: ${recentData.map(d => d.date).join(', ')}`);
+    } else {
+      console.log(`  Warning: No valid data points found after filtering`);
+    }
+    
+    return dataPoints;
   } catch (error) {
     console.error(`Error fetching FRED ${seriesId}:`, error);
     return [];
@@ -142,13 +165,10 @@ async function updateIndicator(
   fetchFn: (startDate: string) => Promise<DataPoint[]>,
   reset: boolean = false
 ): Promise<void> {
-  const startDate = reset ? START_DATE : (() => {
-    const existing = loadExistingData(name);
-    const lastDate = getLastDate(existing);
-    return addDays(lastDate, 1);
-  })();
+  // 항상 START_DATE부터 오늘까지 모든 데이터를 가져옴
+  const startDate = START_DATE;
   
-  console.log(`Fetching ${name} from ${startDate}...`);
+  console.log(`Fetching ${name} from ${startDate} to today...`);
   
   const fetchedData = await fetchFn(startDate);
   
@@ -169,25 +189,55 @@ async function updateIndicator(
     saveData(name, newData);
     console.log(`  Fetched ${filteredData.length} records for ${name} (reset mode, from ${START_DATE})`);
   } else {
-    // 기존 데이터에 추가 (기존 데이터도 2020-01-01 이후만 유지)
+    // 기존 데이터와 병합하여 최신 데이터로 업데이트
     const existing = loadExistingData(name);
     // 기존 데이터도 2020-01-01 이후만 유지
     existing.data = existing.data.filter((dp) => dp.date >= START_DATE);
     
-    const existingDates = new Set(existing.data.map(d => d.date));
-    const uniqueNewData = filteredData.filter(d => !existingDates.has(d.date));
+    // 기존 데이터의 마지막 날짜 확인
+    const existingLastDate = existing.data.length > 0 
+      ? existing.data[existing.data.length - 1].date 
+      : null;
+    const fetchedLastDate = filteredData.length > 0 
+      ? filteredData[filteredData.length - 1].date 
+      : null;
     
-    if (uniqueNewData.length === 0) {
-      console.log(`  No new records for ${name}`);
-      return;
+    if (existingLastDate && fetchedLastDate) {
+      console.log(`  Existing last date: ${existingLastDate}, Fetched last date: ${fetchedLastDate}`);
     }
     
-    existing.data.push(...uniqueNewData);
-    existing.data.sort((a, b) => a.date.localeCompare(b.date));
-    existing.lastUpdated = new Date().toISOString();
+    // 날짜를 키로 하는 Map을 사용하여 최신 데이터로 덮어쓰기
+    const dataMap = new Map<string, DataPoint>();
     
-    saveData(name, existing);
-    console.log(`  Added ${uniqueNewData.length} new records to ${name}`);
+    // 기존 데이터 먼저 추가
+    existing.data.forEach(dp => {
+      dataMap.set(dp.date, dp);
+    });
+    
+    // 새로 가져온 데이터로 덮어쓰기 (최신 데이터 우선)
+    filteredData.forEach(dp => {
+      dataMap.set(dp.date, dp);
+    });
+    
+    // 날짜순으로 정렬
+    const mergedData = Array.from(dataMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+    
+    // 새로 추가된 레코드 찾기
+    const existingDates = new Set(existing.data.map(d => d.date));
+    const newRecords = filteredData.filter(d => !existingDates.has(d.date));
+    
+    const updatedData: StoredData = {
+      data: mergedData,
+      lastUpdated: new Date().toISOString(),
+    };
+    
+    saveData(name, updatedData);
+    
+    if (newRecords.length > 0) {
+      console.log(`  Updated ${name}: ${newRecords.length} new records (${newRecords.map(r => r.date).join(', ')}), total ${mergedData.length} records`);
+    } else {
+      console.log(`  Updated ${name}: No new records, refreshed ${mergedData.length} existing records`);
+    }
   }
 }
 
