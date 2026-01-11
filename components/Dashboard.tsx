@@ -12,7 +12,7 @@ import {
 } from '@/lib/data';
 import { IndicatorChart } from './Chart';
 import { IndicatorCard } from './IndicatorCard';
-import { ReleaseSchedule } from './ReleaseSchedule';
+import { RightPanel } from './RightPanel/RightPanel';
 
 type DateRange = '1M' | '3M' | '6M' | '1Y' | '2Y' | 'ALL';
 
@@ -301,40 +301,12 @@ export function Dashboard({ data }: DashboardProps) {
         </footer>
         </main>
 
-        {/* Right Sidebar - Release Schedule */}
-        <aside
-          className={`w-80 border-l border-terminal-border bg-terminal-surface/50 transition-all duration-300 ${
-            showReleaseSchedule ? 'block' : 'hidden'
-          }`}
-        >
-          <div className="sticky top-[80px] p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-display font-bold text-white">
-                발표 일정
-              </h3>
-              <button
-                onClick={() => setShowReleaseSchedule(!showReleaseSchedule)}
-                className="text-terminal-muted hover:text-white transition-colors"
-                aria-label="Toggle release schedule"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <ReleaseSchedule data={data} />
-          </div>
-        </aside>
+        {/* Right Panel */}
+        <RightPanel
+          data={data}
+          isOpen={showReleaseSchedule}
+          onClose={() => setShowReleaseSchedule(false)}
+        />
       </div>
 
       {/* Toggle Button (when sidebar is hidden) */}

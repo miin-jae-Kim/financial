@@ -66,18 +66,55 @@ npm run update-data
 
 ## API 키 설정
 
+### FRED API 키
+
 FRED API 키는 환경변수로 관리됩니다.
 
-1. `.env.example` 파일을 참고하여 `.env` 파일을 생성하세요:
+1. `.env.local` 파일을 생성하세요:
    ```bash
-   cp .env.example .env
+   touch .env.local
    ```
 
-2. `.env` 파일에 본인의 FRED API 키를 입력하세요:
+2. `.env.local` 파일에 본인의 FRED API 키를 입력하세요:
    ```
    FRED_API_KEY=your_api_key_here
    ```
 
 3. FRED API 키는 https://fred.stlouisfed.org/docs/api/api_key.html 에서 무료로 발급받을 수 있습니다.
 
-**주의**: `.env` 파일은 Git에 커밋되지 않습니다. 각 개발자는 자신의 API 키를 사용해야 합니다.
+### Gemini API 키 (AI Chat 기능)
+
+AI Chat 기능을 사용하려면 Gemini API 키가 필요합니다.
+
+1. `.env.local` 파일에 Gemini API 키를 추가하세요:
+   ```
+   GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+
+2. (선택사항) 사용할 모델을 지정할 수 있습니다:
+   ```
+   GEMINI_MODEL=gemini-2.5-flash
+   ```
+   - `gemini-2.5-flash` (기본값, 최신 모델, 빠르고 효율적)
+   - `gemini-1.5-pro-latest` (더 정확하지만 느림)
+
+3. Gemini API 키는 [Google AI Studio](https://makersuite.google.com/app/apikey)에서 무료로 발급받을 수 있습니다.
+
+### 환경변수 파일 예시
+
+`.env.local` 파일 예시:
+
+```env
+# FRED API Key (필수)
+FRED_API_KEY=your_fred_api_key_here
+
+# Gemini API Key (AI Chat 기능 사용 시 필수)
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Gemini Model (선택사항, 기본값: gemini-2.5-flash)
+# GEMINI_MODEL=gemini-1.5-pro-latest
+```
+
+**주의**: 
+- `.env.local` 파일은 Git에 커밋되지 않습니다. 각 개발자는 자신의 API 키를 사용해야 합니다.
+- 환경변수를 변경한 후에는 개발 서버를 재시작해야 합니다.
