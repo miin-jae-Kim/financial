@@ -66,7 +66,18 @@ npm run update-data
 
 ## API 키 설정
 
-FRED API 키는 `scripts/updateData.ts`에서 설정되어 있습니다.
-본인의 API 키로 변경하려면 해당 파일의 `FRED_API_KEY` 값을 수정하세요.
+FRED API 키는 환경변수로 관리됩니다.
 
-FRED API 키는 https://fred.stlouisfed.org/docs/api/api_key.html 에서 무료로 발급받을 수 있습니다.
+1. `.env.example` 파일을 참고하여 `.env` 파일을 생성하세요:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. `.env` 파일에 본인의 FRED API 키를 입력하세요:
+   ```
+   FRED_API_KEY=your_api_key_here
+   ```
+
+3. FRED API 키는 https://fred.stlouisfed.org/docs/api/api_key.html 에서 무료로 발급받을 수 있습니다.
+
+**주의**: `.env` 파일은 Git에 커밋되지 않습니다. 각 개발자는 자신의 API 키를 사용해야 합니다.

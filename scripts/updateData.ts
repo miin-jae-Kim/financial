@@ -7,10 +7,22 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Load environment variables
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+require('dotenv').config();
+
 // Configuration
-const FRED_API_KEY = '27f5e33ab8a1e27f06efbb5f00303962';
+const FRED_API_KEY = process.env.FRED_API_KEY || '';
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const START_DATE = '2020-01-01';
+
+// Validate API key
+if (!FRED_API_KEY) {
+  console.error('Error: FRED_API_KEY environment variable is not set.');
+  console.error('Please create a .env file with FRED_API_KEY=your_api_key');
+  console.error('See .env.example for reference.');
+  process.exit(1);
+}
 
 interface DataPoint {
   date: string;
