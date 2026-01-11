@@ -50,6 +50,9 @@ const FRED_SERIES: Record<string, string> = {
   nonfarmPayroll: 'PAYEMS',
   vix: 'VIXCLS',        // FRED에서 제공
   sp500: 'SP500',       // FRED에서 제공
+  hySpread: 'BAMLH0A0HYM2',  // ICE BofA 하이일드 스프레드
+  sahmRule: 'SAHMREALTIME',  // 실시간 Sahm Rule 침체 지표
+  unemployment: 'UNRATE',     // 실업률
 };
 
 function ensureDataDir(): void {

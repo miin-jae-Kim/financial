@@ -17,9 +17,28 @@ export interface CombinedData {
     nonfarmPayroll: DataPoint[];
     vix: DataPoint[];
     sp500: DataPoint[];
+    hySpread: DataPoint[];
+    sahmRule: DataPoint[];
+    unemployment: DataPoint[];
   };
   lastUpdated: string;
 }
+
+export type TabId = 'default' | 'rates' | 'inflation' | 'risk' | 'recession';
+
+export interface Tab {
+  id: TabId;
+  label: string;
+  labelEn: string;
+}
+
+export const TABS: Tab[] = [
+  { id: 'default', label: '기본', labelEn: 'Default' },
+  { id: 'rates', label: '금리환경', labelEn: 'Interest Rates' },
+  { id: 'inflation', label: '인플레이션', labelEn: 'Inflation' },
+  { id: 'risk', label: '리스크', labelEn: 'Risk Sentiment' },
+  { id: 'recession', label: '침체신호', labelEn: 'Recession Watch' },
+];
 
 export interface IndicatorConfig {
   key: keyof CombinedData['indicators'];
@@ -108,5 +127,36 @@ export const INDICATOR_CONFIGS: IndicatorConfig[] = [
     source: 'fred',
     sourceId: 'SP500',
     frequency: 'daily',
+  },
+  {
+    key: 'hySpread',
+    name: 'HY Spread',
+    description: 'ICE BofA 하이일드 스프레드',
+    unit: '%',
+    color: '#ffd93d',
+    source: 'fred',
+    sourceId: 'BAMLH0A0HYM2',
+    frequency: 'daily',
+  },
+  {
+    key: 'sahmRule',
+    name: 'Sahm Rule',
+    description: '실시간 Sahm Rule 침체 지표',
+    unit: '%p',
+    color: '#ff3366',
+    source: 'fred',
+    sourceId: 'SAHMREALTIME',
+    frequency: 'monthly',
+  },
+  {
+    key: 'unemployment',
+    name: 'Unemployment Rate',
+    description: '실업률',
+    unit: '%',
+    color: '#6366f1',
+    source: 'fred',
+    sourceId: 'UNRATE',
+    frequency: 'monthly',
+    releaseId: 50, // Employment Situation
   },
 ];
