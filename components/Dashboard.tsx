@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { format } from 'date-fns';
 import { CombinedData, INDICATOR_CONFIGS, IndicatorConfig } from '@/types';
 import {
@@ -20,12 +20,44 @@ interface DashboardProps {
   data: CombinedData;
 }
 
+const UPDATE_INTERVAL_MS = 10 * 60 * 1000; // 10분
+
 export function Dashboard({ data }: DashboardProps) {
   const [selectedIndicator, setSelectedIndicator] = useState<string>('treasury10y');
   const [dateRange, setDateRange] = useState<DateRange>('1Y');
   const [showYieldSpread, setShowYieldSpread] = useState(false);
   const [showCpiYoY, setShowCpiYoY] = useState(false);
   const [showReleaseSchedule, setShowReleaseSchedule] = useState(true);
+
+  // 자동 데이터 업데이트 체크
+  useEffect(() => {
+    const checkAndUpdateData = async () => {
+      try {
+        const response = await fetch('/api/update-data');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.updated) {
+            console.log('Data update started:', result.message);
+            // 업데이트가 시작되면 페이지를 새로고침하여 최신 데이터 표시
+            // 하지만 사용자 경험을 위해 약간의 지연 후 새로고침
+            setTimeout(() => {
+              window.location.reload();
+            }, 5000); // 5초 후 새로고침
+          }
+        }
+      } catch (error) {
+        console.error('Error checking for data update:', error);
+      }
+    };
+
+    // 첫 실행 시 즉시 체크
+    checkAndUpdateData();
+
+    // 이후 30분마다 체크
+    const interval = setInterval(checkAndUpdateData, UPDATE_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const selectedConfig = INDICATOR_CONFIGS.find(c => c.key === selectedIndicator);
 
